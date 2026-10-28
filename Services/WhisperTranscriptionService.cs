@@ -87,7 +87,7 @@ public class WhisperTranscriptionService : ITranscriptionService
             throw new FileNotFoundException($"Whisper model binary not found at '{options.ModelPath}'. Ensure ggml-base.bin is present.");
 
         using var factory = WhisperFactory.FromPath(options.ModelPath);
-        using var processor = factory.CreateBuilder().WithLanguage(options.Language).Build();
+        using var processor = factory.CreateBuilder().WithLanguage(options.Language).WithThreads(Environment.ProcessorCount).Build();
 
         var segments = new List<AudioSegment>();
         var fullTextBuilder = new StringBuilder();
@@ -97,6 +97,12 @@ public class WhisperTranscriptionService : ITranscriptionService
         await foreach (var segment in processor.ProcessAsync(audioStream, cancellationToken))
         {
             var cleanText = segment.Text.Trim();
+
+            // Filter out non-speech sound markers (e.g. [Music], [Applause])
+            cleanText = cleanText.Replace("[Music]", "", StringComparison.OrdinalIgnoreCase)
+                                 .Replace("[Applause]", "", StringComparison.OrdinalIgnoreCase)
+                                 .Trim();
+
             if (string.IsNullOrWhiteSpace(cleanText))
                 continue;
 

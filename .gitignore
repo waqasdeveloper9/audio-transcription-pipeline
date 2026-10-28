@@ -7,8 +7,8 @@ obj/
 *.user
 *.suo
 
-# Whisper Model binary (141 MB exceeds GitHub's 100 MB file limit)
-ggml-base.bin
+# Whisper Model binaries (exceed GitHub's 100 MB file limit)
+ggml-*.bin
 
 # Temporary audio files
 audio_*.wav

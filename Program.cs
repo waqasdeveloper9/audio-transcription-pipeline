@@ -12,7 +12,8 @@ internal class Program
         Console.WriteLine("---------------------------");
 
         string audioPath = string.Empty;
-        string modelPath = ResolvePath("ggml-base.bin");
+        string defaultModel = File.Exists(ResolvePath("ggml-tiny.bin")) ? "ggml-tiny.bin" : "ggml-base.bin";
+        string modelPath = ResolvePath(defaultModel);
 
         // Select audio file from arguments or interactive prompt
         if (args.Length > 0)
@@ -75,9 +76,12 @@ internal class Program
 
         try
         {
+            Console.WriteLine($"\n[TEST] Using Model: {Path.GetFileName(modelPath)}");
+            var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+
             // Enqueue job immediately without blocking caller
             var jobId = jobWorker.Enqueue(audioPath, options);
-            Console.WriteLine($"\nJob enqueued. Traceable Job ID: {jobId}");
+            Console.WriteLine($"Job enqueued. Traceable Job ID: {jobId}");
             Console.Write("Processing in background");
 
             // Monitor background job progress
@@ -91,7 +95,9 @@ internal class Program
                 Console.Write(".");
                 await Task.Delay(500);
             }
+            stopwatch.Stop();
             Console.WriteLine();
+            Console.WriteLine($"\n[TEST] Execution Time: {stopwatch.Elapsed.TotalSeconds:F2} seconds ({stopwatch.Elapsed.Minutes}m {stopwatch.Elapsed.Seconds}s)");
 
             if (job?.Status == JobStatus.Completed && job.Result != null)
             {
